@@ -2,32 +2,41 @@ import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import * as cors from 'cors';
+import { AllExceptionsFilter } from './Libs/common/filters/all-exceptions.filter';
+import { ValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { cors: true });
   const port = process.env.PORT || 3000;
 
+  app.setGlobalPrefix('/api');
   app.enableCors();
   app.use(cors());
+  app.useGlobalPipes(new ValidationPipe());
+  app.useGlobalFilters(new AllExceptionsFilter());
+
   const config = new DocumentBuilder()
-    .setTitle('Continental Hotels API')
+    .setTitle('authentication management API')
     .setDescription(
-      'The Continental Hotels API provides a complete interface for hotel management, including reservations, room management, billing and more. This API is designed to be easy to use and highly flexible, allowing easy integration with a variety of hotel management systems.',
+      'The authentication management API focuses primarily on authentication, providing a secure interface for user login, registration and user management, as well as sophisticated logging and global error handling..',
     )
     .setVersion('2.0')
-    .addTag('Hotels', 'Operations related to hotel management')
-    .addTag('Reservas', 'Operations related to hotel reservation management')
-    .addTag('Billing', 'Invoicing and payment transactions')
+    .addTag(
+      'Authentication',
+      'Operations related to user authentication and authorization',
+    )
     .addBearerAuth() // Adds support for Bearer authentication
     .build();
+
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api/docs', app, document);
 
-  app.setGlobalPrefix('/api');
   await app.listen(port);
-  console.log(`The application is running in: http://localhost:${port}/api\n`);
-  console.log(`the swagger app is running in: http://localhost:${port}/api/docs`);
-  
-}
-bootstrap();
 
+  console.log(`The application is running in: http://localhost:${port}/api\n`);
+  console.log(
+    `The Swagger app is running in: http://localhost:${port}/api/docs`,
+  );
+}
+
+bootstrap();
