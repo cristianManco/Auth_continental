@@ -8,7 +8,10 @@ import { TokenService } from '../utils/validateTokens.service';
 export class AtGuard extends AuthGuard('jwt') {
   private readonly logger = new Logger(AtGuard.name);
 
-  constructor(private reflector: Reflector, private tokenService: TokenService) {
+  constructor(
+    private reflector: Reflector,
+    private tokenService: TokenService,
+  ) {
     super();
   }
 
@@ -24,17 +27,20 @@ export class AtGuard extends AuthGuard('jwt') {
 
     const request = await context.switchToHttp().getRequest();
     const authHeader = await request.headers['authorization'];
-    
+
     console.log(authHeader);
 
     if (!authHeader) {
-      throw new HttpException('No Authorization Headers', HttpStatus.UNAUTHORIZED);
+      throw new HttpException(
+        'No Authorization Headers',
+        HttpStatus.UNAUTHORIZED,
+      );
     }
-    
+
     const token = authHeader.split(' ')[1];
 
     // Verifica el formato del token
-    if ( typeof token != 'string') {
+    if (typeof token != 'string') {
       throw new HttpException('Invalid token format', HttpStatus.UNAUTHORIZED);
     }
 
@@ -47,10 +53,20 @@ export class AtGuard extends AuthGuard('jwt') {
       request.user = payload; // Añade el payload al request
 
       // Obtiene los roles requeridos para el endpoint
-      const validRoles: string[] = this.reflector.get('roles', context.getHandler());
+      const validRoles: string[] = this.reflector.get(
+        'roles',
+        context.getHandler(),
+      );
 
-      if (validRoles && validRoles.length > 0 && !validRoles.includes(payload.sub.role)) {
-        throw new HttpException(`User needs a valid role: ${validRoles}`, HttpStatus.FORBIDDEN);
+      if (
+        validRoles &&
+        validRoles.length > 0 &&
+        !validRoles.includes(payload.sub.role)
+      ) {
+        throw new HttpException(
+          `User needs a valid role: ${validRoles}`,
+          HttpStatus.FORBIDDEN,
+        );
       }
 
       return true; // Token es válido y el usuario tiene acceso

@@ -67,7 +67,10 @@ export class AdminService {
 
       return { users, total, page, limit };
     } catch (error) {
-      throw new HttpException('Failed to find users', HttpStatus.NOT_FOUND);
+      throw new HttpException(
+        'Failed to find users' + error.message,
+        HttpStatus.NOT_FOUND,
+      );
     }
   }
 
@@ -91,7 +94,6 @@ export class AdminService {
 
   async validateEmail(email: string): Promise<void> {
     try {
-      
       const user = await this.model.findOne({ email: email });
       if (user) {
         throw new HttpException(
@@ -106,10 +108,9 @@ export class AdminService {
       );
     }
   }
-  
 
   async findOneByEmail(email: string): Promise<Admin> {
-    const user = await this.model.findOne({ email:email });
+    const user = await this.model.findOne({ email: email });
     if (!user) throw new NotFoundException('User not found');
     return user;
   }

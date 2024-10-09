@@ -18,8 +18,7 @@ const providers = [
   BlacklistService,
   TokenService,
   AtGuard,
-  
-]
+];
 
 @Module({
   imports: [
@@ -33,6 +32,6 @@ const providers = [
   ],
   controllers: [AuthController],
   providers: [...providers],
-  exports: [BlacklistService,TokenService],
+  exports: [BlacklistService, TokenService],
 })
 export class AuthModule {}

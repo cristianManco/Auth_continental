@@ -29,8 +29,8 @@ import { InterceptorService } from './Libs/authenticate/utils/interceptor.servic
       useClass: AtGuard,
     },
     {
-       provide: APP_INTERCEPTOR,
-       useClass: LogInterceptor,
+      provide: APP_INTERCEPTOR,
+      useClass: LogInterceptor,
     },
     {
       provide: APP_INTERCEPTOR,

@@ -13,7 +13,7 @@ import { UserType } from '../entities/admin.entity';
 
 export class CreateAdminDto {
   @ApiProperty({
-    description: 'Nombre del usuario',
+    description: 'User name',
     example: 'Juan Pérez',
   })
   @IsNotEmpty({ message: 'El nombre es obligatorio' })

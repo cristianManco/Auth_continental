@@ -61,9 +61,9 @@ export class AdminController {
     type: Number,
     example: 10,
   })
-  @ApiResponse({ status: 200, description: 'Lista de usuarios', type: [Admin] })
+  @ApiResponse({ status: 200, description: 'List of users', type: [Admin] })
   @ApiResponse({ status: 400, description: 'Bad Request.' })
-  @ApiResponse({ status: 404, description: 'No se encontraron usuarios' })
+  @ApiResponse({ status: 404, description: 'No users found' })
   async findAll(@Query() query: any): Promise<any> {
     const { page = 1, limit = 10, sort, ...filters } = query;
     return await this.service.findAllUsers(filters, sort, +page, +limit);
@@ -71,18 +71,18 @@ export class AdminController {
 
   @Roles('admin')
   @Get(':_id')
-  @ApiOperation({ summary: 'Obtener un usuario por ID' })
-  @ApiResponse({ status: 200, description: 'Usuario encontrado', type: Admin })
-  @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
+  @ApiOperation({ summary: 'Get a user by ID' })
+  @ApiResponse({ status: 200, description: 'User found', type: Admin })
+  @ApiResponse({ status: 404, description: 'User not found' })
   async findOne(@Param('_id') id: string) {
     return await this.service.findOne(id);
   }
 
   @Roles('admin')
   @Put(':_id')
-  @ApiOperation({ summary: 'Actualizar un usuario' })
-  @ApiResponse({ status: 200, description: 'Usuario actualizado', type: Admin })
-  @ApiResponse({ status: 404, description: 'Usuario no encontrado' })
+  @ApiOperation({ summary: 'Update a user' })
+  @ApiResponse({ status: 200, description: 'Updated user', type: Admin })
+  @ApiResponse({ status: 404, description: 'User not found' })
   async update(
     @Param('_id') id: string,
     @Body() updateAdminDto: UpdateAdminDto,
@@ -90,13 +90,13 @@ export class AdminController {
     return await this.service.update(id, updateAdminDto);
   }
 
-  @Roles('admin')
+  @Roles('admin', 'superadmin')
   @Delete(':_id')
-  @ApiOperation({ summary: 'Eliminar un usuario' })
-  @ApiResponse({ status: 204, description: 'Usuario eliminado' })
+  @ApiOperation({ summary: 'Delete a user' })
+  @ApiResponse({ status: 204, description: 'User deleted' })
   @ApiResponse({
     status: 404,
-    description: 'Usuario no encontrado o ya eliminado',
+    description: 'User not found or already deleted',
   })
   async remove(@Param('_id') id: string) {
     await this.service.removeUser(id);

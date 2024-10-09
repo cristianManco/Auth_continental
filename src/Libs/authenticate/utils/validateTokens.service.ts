@@ -12,9 +12,13 @@ export class TokenService {
 
   async validateToken(token: string): Promise<JwtPayload> {
     try {
-      const isBlacklisted = await this.blacklistService.isTokenBlacklisted(token);
+      const isBlacklisted =
+        await this.blacklistService.isTokenBlacklisted(token);
       if (isBlacklisted) {
-        throw new HttpException('Token is blacklisted', HttpStatus.UNAUTHORIZED);
+        throw new HttpException(
+          'Token is blacklisted',
+          HttpStatus.UNAUTHORIZED,
+        );
       }
 
       const payload = await this.jwtService.verifyAsync(token, {
@@ -23,7 +27,10 @@ export class TokenService {
 
       return payload as JwtPayload;
     } catch (error) {
-      throw new HttpException('Invalid or expired token', HttpStatus.UNAUTHORIZED);
+      throw new HttpException(
+        'Invalid or expired token: ' + error.message,
+        HttpStatus.UNAUTHORIZED,
+      );
     }
   }
 }

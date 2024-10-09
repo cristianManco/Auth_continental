@@ -19,7 +19,6 @@ export class AuthService {
   ) {}
 
   async validateUser(payload: JwtPayload) {
-    console.log(payload)
     try {
       const user = await this.adminService.findOne(payload.sub.email); // Usa el ID correctamente
       if (!user) {
@@ -28,7 +27,7 @@ export class AuthService {
       return user; // Retorna el usuario encontrado
     } catch (error) {
       throw new HttpException(
-        'Failed to validate user',
+        'Failed to validate user: ' + error.message,
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -38,18 +37,23 @@ export class AuthService {
     const { email, password } = loginDto;
 
     const user = await this.adminService.findOneByEmail(email);
-  
+
     if (!user) {
       throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
     }
 
-    const isValiPassword = await this.hashService.comparePassword(password, user.password)
+    const isValiPassword = await this.hashService.comparePassword(
+      password,
+      user.password,
+    );
     if (!isValiPassword) {
-      throw new HttpException('Invalid credentials password', HttpStatus.UNAUTHORIZED);
+      throw new HttpException(
+        'Invalid credentials password',
+        HttpStatus.UNAUTHORIZED,
+      );
     }
 
     try {
-
       // Define el payload del JWT
       const subJwt: Sub = {
         id: user.id,
@@ -60,7 +64,6 @@ export class AuthService {
       const token: Tokens = await this.getTokens({
         sub: subJwt,
       });
-      console.log(token);
 
       return token;
     } catch (error) {
@@ -91,7 +94,6 @@ export class AuthService {
       const token: Tokens = await this.getTokens({
         sub: subJwt,
       });
-      console.log(token)
 
       return token;
     } catch (error) {
@@ -155,5 +157,4 @@ export class AuthService {
       );
     }
   }
-
 }

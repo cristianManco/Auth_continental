@@ -40,7 +40,10 @@ export class LogService {
       });
       await log.save();
     } catch (error) {
-      throw new HttpException('Error logging request:', HttpStatus.FORBIDDEN);
+      throw new HttpException(
+        'Error logging request:' + error.message,
+        HttpStatus.FORBIDDEN,
+      );
     }
   }
 
@@ -70,7 +73,7 @@ export class LogService {
       await this.logModel.findByIdAndDelete(logId).exec();
     } catch (error) {
       throw new HttpException(
-        'failed to deleted logs record',
+        'failed to deleted logs record' + error.message,
         HttpStatus.NOT_IMPLEMENTED,
       );
     }
