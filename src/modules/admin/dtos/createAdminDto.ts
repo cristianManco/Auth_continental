@@ -42,6 +42,15 @@ export class CreateAdminDto {
   readonly password: string;
 
   @ApiProperty({
+    description: 'Teléfono del administrador',
+    example: '+54 9 123456789',
+    required: false,
+  })
+  @IsOptional()
+  @IsString({ message: 'El teléfono debe ser una cadena numerica' })
+  readonly phone?: string;
+
+  @ApiProperty({
     description: 'Tipo de documento del administrador',
     example: 'DNI',
     required: false,

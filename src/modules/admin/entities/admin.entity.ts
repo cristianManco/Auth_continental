@@ -15,7 +15,7 @@ export class Admin {
   @Prop({ type: String, default: uuidv4 })
   id: string;
 
-  @Prop()
+  @Prop({required: true})
   name: string;
 
   @Prop({ required: true })
@@ -23,6 +23,9 @@ export class Admin {
 
   @Prop({ required: true })
   password: string;
+
+  @Prop()
+  phone: string;
 
   @Prop()
   typeDocument: string;
