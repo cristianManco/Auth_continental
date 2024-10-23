@@ -1,34 +1,79 @@
 import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
 import { BlacklistService } from '../utils/blacklist.service';
 import { Sub } from '../types/sub.type';
-import { JwtPayload } from '../types/jwtPayload.type';
+import * as admin from 'firebase-admin';
 import { Tokens } from '../types/tokens.type';
 import { AdminService } from 'src/modules/admin/services/admin.service';
 import { HashService } from 'src/Libs/shared-modules/encript/encript.service';
 import { UserLoginDto } from '../Dtos/login.dto';
 import { CreateAdminDto } from 'src/modules/admin/dtos/createAdminDto';
+import { ValidateTokenService } from '../utils/validateTokens.service';
+import { GetTokensService } from '../utils/getTokens.service';
+import { firebaseLoginDto } from '../Dtos/firebase.dto';
 
 @Injectable()
 export class AuthService {
   constructor(
-    private readonly jwtService: JwtService,
     private readonly adminService: AdminService,
     private readonly hashService: HashService,
     private readonly blackLisToken: BlacklistService,
+    private readonly validateToken: ValidateTokenService,
+    private readonly geTokenService: GetTokensService,
   ) {}
 
-  async validateUser(payload: JwtPayload) {
+  async firebaseLogin(firebaseLogin: firebaseLoginDto): Promise<Tokens> {
+    const { token } = firebaseLogin;
+
+    if (!token) {
+      throw new HttpException('Token is required', HttpStatus.BAD_REQUEST);
+    }
+
     try {
-      const user = await this.adminService.findOne(payload.sub.email); // Usa el ID correctamente
-      if (!user) {
-        throw new HttpException('User not found', HttpStatus.UNAUTHORIZED);
+      // Verificar el token de Firebase
+      const decodedToken = await admin.auth().verifyIdToken(token);
+      const userRecord = await admin.auth().getUser(decodedToken.uid);
+
+      if (!userRecord) {
+        throw new HttpException('Invalid token', HttpStatus.UNAUTHORIZED);
       }
-      return user; // Retorna el usuario encontrado
+
+      const subJwt: Sub = {
+        id: userRecord.uid,
+        email: userRecord.email,
+        role: 'user',
+      };
+
+      const jwtTokens: Tokens = await this.geTokenService.getTokens({
+        sub: subJwt,
+      });
+
+      return jwtTokens;
     } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      if (error.code === 'auth/id-token-expired') {
+        throw new HttpException(
+          'Firebase token has expired',
+          HttpStatus.UNAUTHORIZED,
+        );
+      }
       throw new HttpException(
-        'Failed to validate user: ' + error.message,
+        `Failed to authenticate user: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async validateUser(token: string): Promise<object> {
+    try {
+      const secret = process.env.JWT_SECRET || process.env.JWT_REFRESH_SECRET;
+
+      return await this.validateToken.validateTokens(token, secret);
+    } catch (err) {
+      throw new HttpException(
+        `Ups... error: ${err}`,
+        HttpStatus.NOT_ACCEPTABLE,
       );
     }
   }
@@ -47,10 +92,7 @@ export class AuthService {
       user.password,
     );
     if (!isValiPassword) {
-      throw new HttpException(
-        'Invalid credentials password',
-        HttpStatus.UNAUTHORIZED,
-      );
+      throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
     }
 
     try {
@@ -61,7 +103,7 @@ export class AuthService {
         role: user.role,
       };
 
-      const token: Tokens = await this.getTokens({
+      const token: Tokens = await this.geTokenService.getTokens({
         sub: subJwt,
       });
 
@@ -91,7 +133,7 @@ export class AuthService {
         role: user.role,
       };
 
-      const token: Tokens = await this.getTokens({
+      const token: Tokens = await this.geTokenService.getTokens({
         sub: subJwt,
       });
 
@@ -110,49 +152,6 @@ export class AuthService {
     } catch (error) {
       throw new HttpException(
         'Failed to logout: ' + error.message,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  async getTokens(jwtPayload: JwtPayload): Promise<Tokens> {
-    const secretKey = process.env.JWT_SECRET;
-    if (!secretKey) {
-      throw new HttpException(
-        'JWT_SECRET is not set or is invalid',
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-
-    try {
-      const accessTokenOptions = {
-        expiresIn: process.env.ACCESS_TOKEN_EXPIRE || '1h',
-      };
-
-      const accessToken = await this.signToken(
-        jwtPayload,
-        secretKey,
-        accessTokenOptions,
-      );
-
-      return { access_token: accessToken };
-    } catch (error) {
-      throw new HttpException(
-        'Failed to generate tokens: ' + error.message,
-        HttpStatus.INTERNAL_SERVER_ERROR,
-      );
-    }
-  }
-
-  async signToken(payload: JwtPayload, secretKey: string, options: any) {
-    try {
-      return await this.jwtService.signAsync(payload, {
-        secret: secretKey,
-        ...options,
-      });
-    } catch (error) {
-      throw new HttpException(
-        'Failed to sign token: ' + error.message,
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }

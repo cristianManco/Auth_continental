@@ -3,7 +3,8 @@ import {
   NestInterceptor,
   ExecutionContext,
   CallHandler,
-  UnauthorizedException,
+  HttpException,
+  HttpStatus,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { BlacklistService } from './blacklist.service';
@@ -25,7 +26,10 @@ export class InterceptorService implements NestInterceptor {
       const isBlacklisted =
         await this.blacklistService.isTokenBlacklisted(token);
       if (isBlacklisted) {
-        throw new UnauthorizedException('User token is blacklisted.');
+        throw new HttpException(
+          'User token is blacklisted.',
+          HttpStatus.UNAUTHORIZED,
+        );
       }
     }
 

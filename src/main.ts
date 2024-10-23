@@ -35,7 +35,7 @@ async function bootstrap() {
 
   console.log(`The application is running in: http://localhost:${port}/api\n`);
   console.log(
-    `The Swagger app is running in: http://localhost:${port}/api/docs`,
+    `The Swagger app is running in: https://auth-secure.onrender.com/api/docs`,
   );
 }
 

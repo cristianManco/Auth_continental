@@ -5,6 +5,7 @@ import { AdminController } from './controllers/admin.controller';
 import { AdminService } from './services/admin.service';
 import { EncriptModule } from 'src/Libs/shared-modules/share.module';
 import { LogModule } from '../log/log.module';
+import { FirebaseModule } from 'src/Libs/firebase/firebase.module';
 
 @Module({
   imports: [
@@ -16,9 +17,10 @@ import { LogModule } from '../log/log.module';
     ]),
     EncriptModule,
     LogModule,
+    FirebaseModule,
   ],
   controllers: [AdminController],
   providers: [AdminService],
-  exports: [AdminService],
+  exports: [AdminService, MongooseModule],
 })
 export class AdminModule {}

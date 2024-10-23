@@ -1,35 +1,42 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
+import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { JwtPayload } from '../types/jwtPayload.type';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model } from 'mongoose';
+import { Admin } from 'src/modules/admin/entities/admin.entity';
 import { BlacklistService } from './blacklist.service';
+import { JwtPayload } from '../types/jwtPayload.type';
 
 @Injectable()
-export class TokenService {
+export class ValidateTokenService {
   constructor(
+    @InjectModel(Admin.name) private userModel: Model<Admin>,
     private readonly jwtService: JwtService,
-    private readonly blacklistService: BlacklistService,
+    private readonly whiteListService: BlacklistService,
   ) {}
 
-  async validateToken(token: string): Promise<JwtPayload> {
+  async validateTokens(token: string, secret: string): Promise<object> {
     try {
-      const isBlacklisted =
-        await this.blacklistService.isTokenBlacklisted(token);
-      if (isBlacklisted) {
-        throw new HttpException(
-          'Token is blacklisted',
-          HttpStatus.UNAUTHORIZED,
-        );
-      }
+      // Usamos el secreto pasado como parámetro
+      const isValid = await this.jwtService.verifyAsync(token, { secret });
 
-      const payload = await this.jwtService.verifyAsync(token, {
-        secret: process.env.JWT_SECRET,
-      });
+      const { sub } = isValid as JwtPayload;
 
-      return payload as JwtPayload;
-    } catch (error) {
+      const user = await this.userModel.findOne({ id: sub.id });
+
+      const isValidInWhiteList =
+        await this.whiteListService.isTokenBlacklisted(token);
+
+      if (user.deletedAt != null)
+        throw new HttpException('User invalid', HttpStatus.NOT_FOUND);
+
+      if (!isValid || !user || isValidInWhiteList)
+        throw new HttpException('Invalid token...', HttpStatus.BAD_REQUEST);
+
+      return { message: 'The token is valid!' };
+    } catch (err) {
       throw new HttpException(
-        'Invalid or expired token: ' + error.message,
-        HttpStatus.UNAUTHORIZED,
+        `Ups... error: ${err}`,
+        HttpStatus.NOT_IMPLEMENTED,
       );
     }
   }

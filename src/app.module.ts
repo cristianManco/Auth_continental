@@ -9,6 +9,7 @@ import { AtGuard } from './Libs/authenticate/Guard/jwt.guard';
 import { LogModule } from './modules/log/log.module';
 import { LogInterceptor } from './modules/log/Interceptor/log.interceptor';
 import { InterceptorService } from './Libs/authenticate/utils/interceptor.service';
+import { FirebaseModule } from './Libs/firebase/firebase.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { InterceptorService } from './Libs/authenticate/utils/interceptor.servic
       load: [dbConfig],
       isGlobal: true,
     }),
+    FirebaseModule,
     AuthModule,
     AdminModule,
     LogModule,

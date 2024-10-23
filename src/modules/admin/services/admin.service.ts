@@ -8,22 +8,13 @@ import { InjectModel } from '@nestjs/mongoose';
 import { isValidObjectId, Model } from 'mongoose';
 import { Admin, UserDocument } from '../entities/admin.entity';
 import { CreateAdminDto, UpdateAdminDto } from '../dtos/exports';
-import { HashService } from 'src/Libs/shared-modules/encript/encript.service';
 
 @Injectable()
 export class AdminService {
-  constructor(
-    @InjectModel(Admin.name) private model: Model<UserDocument>,
-    private readonly hashService: HashService,
-  ) {}
+  constructor(@InjectModel(Admin.name) private model: Model<UserDocument>) {}
 
   async create(createAdminDto: CreateAdminDto): Promise<Admin> {
     try {
-      await this.validateEmail(createAdminDto.email);
-
-      // const hashedPassword = await this.hashService.hashing(
-      //   createAdminDto.password,
-      // );
       const newAdmin = new this.model({
         ...createAdminDto,
         createdAt: new Date(),
@@ -78,15 +69,22 @@ export class AdminService {
     userId: string,
     updateUserDto: UpdateAdminDto,
   ): Promise<Admin> {
-    const user = await this.model.findOne({ _id: userId });
-    if (!user) throw new NotFoundException('User not found');
+    const user = await this.model.findById(userId).exec();
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${userId} not found`);
+    }
+
+    // Actualizar solo los campos permitidos
+    Object.assign(user, updateUserDto);
+    user.updatedAt = new Date();
 
     try {
-      Object.assign(user, updateUserDto, { updatedAt: new Date() });
+      // Guardar el usuario actualizado en la base de datos
       return await user.save();
     } catch (error) {
       throw new HttpException(
-        'Failed to update user: ' + error.message,
+        `Failed to update user: ${error.message}`,
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
@@ -125,16 +123,6 @@ export class AdminService {
       throw new NotFoundException('User not found');
     }
     return user;
-  }
-
-  async update(id: string, updateAdminDto: UpdateAdminDto): Promise<Admin> {
-    const updatedAdmin = await this.model
-      .findByIdAndUpdate(id, updateAdminDto, { new: true })
-      .exec();
-    if (!updatedAdmin) {
-      throw new NotFoundException(`User with ID ${id} not found`);
-    }
-    return updatedAdmin;
   }
 
   async removeUser(userId: string): Promise<void> {

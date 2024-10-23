@@ -8,7 +8,10 @@ export class HashService {
       const saltRounds = 12;
       return await bcrypt.hash(password, saltRounds);
     } catch (error) {
-      throw new HttpException(error.message, HttpStatus.NOT_ACCEPTABLE);
+      throw new HttpException(
+        `Ups..Error Hashing password:  ${error.message}`,
+        HttpStatus.NOT_ACCEPTABLE,
+      );
     }
   }
 

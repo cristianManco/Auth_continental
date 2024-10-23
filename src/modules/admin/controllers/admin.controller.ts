@@ -6,6 +6,8 @@ import {
   Delete,
   Put,
   Query,
+  HttpStatus,
+  HttpCode,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -13,6 +15,8 @@ import {
   ApiOperation,
   ApiResponse,
   ApiQuery,
+  ApiParam,
+  ApiBody,
 } from '@nestjs/swagger';
 import { AdminService } from '../services/admin.service';
 import { UpdateAdminDto } from '../dtos/exports';
@@ -79,19 +83,33 @@ export class AdminController {
   }
 
   @Roles('admin')
-  @Put(':_id')
-  @ApiOperation({ summary: 'Update a user' })
-  @ApiResponse({ status: 200, description: 'Updated user', type: Admin })
-  @ApiResponse({ status: 404, description: 'User not found' })
-  async update(
-    @Param('_id') id: string,
-    @Body() updateAdminDto: UpdateAdminDto,
+  @Put('update/:id')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Update user details' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'User details updated successfully',
+    type: Admin,
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'User not found',
+  })
+  @ApiResponse({
+    status: HttpStatus.INTERNAL_SERVER_ERROR,
+    description: 'Failed to update user',
+  })
+  @ApiParam({ name: 'id', description: 'User ID', required: true })
+  @ApiBody({ type: UpdateAdminDto, description: 'Updated user data' })
+  async updateUser(
+    @Param('id') userId: string,
+    @Body() updateUserDto: UpdateAdminDto,
   ): Promise<Admin> {
-    return await this.service.update(id, updateAdminDto);
+    return this.service.updateUser(userId, updateUserDto);
   }
 
   @Roles('admin', 'superadmin')
-  @Delete(':_id')
+  @Delete('delete/:_id')
   @ApiOperation({ summary: 'Delete a user' })
   @ApiResponse({ status: 204, description: 'User deleted' })
   @ApiResponse({

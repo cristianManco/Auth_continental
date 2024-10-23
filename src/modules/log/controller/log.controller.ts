@@ -5,15 +5,18 @@ import {
   ApiQuery,
   ApiParam,
   ApiResponse,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { LogService } from '../service/log.service';
 import { Roles } from 'src/Libs/decorators/roles.decorator';
 
 @ApiTags('logs')
+@ApiBearerAuth()
 @Controller('logs')
 export class LogsController {
   constructor(private readonly logService: LogService) {}
 
+  // @Public()
   @Roles('superadmin', 'admin')
   @Get('all')
   @ApiOperation({ summary: 'Get all logs with pagination and sorting' })
@@ -37,6 +40,7 @@ export class LogsController {
     return await this.logService.getLogs(page, limit, sort);
   }
 
+  @Roles('admin')
   @Delete(':id')
   @ApiOperation({ summary: 'Delete a log by ID' })
   @ApiResponse({ status: 200, description: 'API Key is valid' })

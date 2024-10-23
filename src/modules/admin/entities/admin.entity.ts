@@ -1,21 +1,16 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document } from 'mongoose';
+import { UserType } from 'src/Libs/shared-modules/enums/user.enum';
 import { v4 as uuidv4 } from 'uuid';
 
 export type UserDocument = Admin & Document;
-
-export enum UserType {
-  SUPERADMIN = 'superadmin',
-  ADMIN = 'admin',
-  USER = 'user',
-}
 
 @Schema()
 export class Admin {
   @Prop({ type: String, default: uuidv4 })
   id: string;
 
-  @Prop({required: true})
+  @Prop({ required: true })
   name: string;
 
   @Prop({ required: true })
